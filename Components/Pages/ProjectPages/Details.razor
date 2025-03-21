@@ -1,0 +1,52 @@
+﻿@page "/projects/details"
+@using Microsoft.EntityFrameworkCore
+@using BlazorApp1.Models
+@inject IDbContextFactory<BlazorApp1.Data.BlazorApp1Context> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Project</h2>
+    <hr />
+    @if (project is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Code</dt>
+            <dd class="col-sm-10">@project.Code</dd>
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@project.Name</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@project.Description</dd>
+            <dt class="col-sm-2">StartDate</dt>
+            <dd class="col-sm-10">@project.StartDate</dd>
+        </dl>
+        <div>
+            <a href="@($"/projects/edit?id={project.Id}")">Edit</a> |
+            <a href="@($"/projects")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Project? project;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        project = await context.Project.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (project is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

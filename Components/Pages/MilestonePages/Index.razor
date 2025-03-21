@@ -1,0 +1,53 @@
+﻿@page "/milestones"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using BlazorApp1.Models
+@using BlazorApp1.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<BlazorApp1.Data.BlazorApp1Context> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="milestones/create">Create New</a>
+</p>
+
+<QuickGrid TGridItem="Milestone" Class="table" Items="Milestones">
+    <!-- Trabalhando diretamente com IQueryable -->
+    <PropertyColumn Property="milestone => milestone.Code" />
+    <PropertyColumn Property="milestone => milestone.Description" />
+    <TemplateColumn Title="Project Name" Context="milestone">
+        @milestone.Project?.Name <!-- Exibe o nome do projeto associado -->
+    </TemplateColumn>
+
+    <TemplateColumn Context="milestone">
+        <a href="@($"milestones/edit?id={milestone.Id}")">Edit</a> |
+        <a href="@($"milestones/details?id={milestone.Id}")">Details</a> |
+        <a href="@($"milestones/delete?id={milestone.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private BlazorApp1Context context = default!;
+    private IQueryable<Milestone> Milestones { get; set; } = default!; // Mantém os dados como IQueryable
+
+    protected override void OnInitialized()
+    {
+        // Inicializa o contexto e define Milestones como uma consulta ao banco de dados
+        context = DbFactory.CreateDbContext();
+
+        // Configura Milestones como uma consulta IQueryable com o relacionamento de Project incluído
+        Milestones = context.Milestone.Include(m => m.Project);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Libera recursos do contexto, se inicializado
+        if (context != null)
+        {
+            await context.DisposeAsync();
+        }
+    }
+}

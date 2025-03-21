@@ -1,0 +1,69 @@
+﻿@page "/milestonesN"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using BlazorApp1.Models
+@using BlazorApp1.Data
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@inject IDbContextFactory<BlazorApp1.Data.BlazorApp1Context> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="milestones/create">Create New</a>
+</p>
+
+<!-- Dropdown para selecionar o projeto -->
+<div class="mb-3">
+    <label for="projectFilter" class="form-label">Select Project:</label>
+    <select id="projectFilter" class="form-select" @bind="SelectedProjectId">
+        <option value="">All Projects</option> <!-- Opção para exibir todos -->
+        @foreach (var project in Projects)
+        {
+            <option value="@project.Id">@project.Name</option>
+        }
+    </select>
+</div>
+
+<!-- Grid de marcos -->
+<QuickGrid TGridItem="Milestone" Class="table" Items="FilteredMilestones">
+    <PropertyColumn Property="milestone => milestone.Code" />
+    <PropertyColumn Property="milestone => milestone.Description" />
+
+    <TemplateColumn Context="milestone">
+        <a href="@($"milestones/edit?id={milestone.Id}")">Edit</a> |
+        <a href="@($"milestones/details?id={milestone.Id}")">Details</a> |
+        <a href="@($"milestones/delete?id={milestone.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private BlazorApp1Context context = default!;
+    private IQueryable<Milestone> Milestones { get; set; } = default!;
+    private List<Project> Projects { get; set; } = new(); // Lista de projetos
+    private int? SelectedProjectId { get; set; } = null; // ID do projeto selecionado
+    private IQueryable<Milestone> FilteredMilestones => SelectedProjectId == null
+        ? Milestones
+        : Milestones.Where(m => m.ProjectId == SelectedProjectId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = DbFactory.CreateDbContext();
+
+        // Carrega a lista de projetos
+        Projects = await context.Project.ToListAsync();
+
+        // Define a consulta para os marcos
+        Milestones = context.Milestone.Include(m => m.Project);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (context != null)
+        {
+            await context.DisposeAsync();
+        }
+    }
+}

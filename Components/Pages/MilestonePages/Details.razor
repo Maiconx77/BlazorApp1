@@ -1,0 +1,50 @@
+﻿@page "/milestones/details"
+@using Microsoft.EntityFrameworkCore
+@using BlazorApp1.Models
+@inject IDbContextFactory<BlazorApp1.Data.BlazorApp1Context> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Milestone</h2>
+    <hr />
+    @if (milestone is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Code</dt>
+            <dd class="col-sm-10">@milestone.Code</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@milestone.Description</dd>
+            <dt class="col-sm-2">Project</dt>
+            <dd class="col-sm-10">@milestone.Project?.Name</dd>
+        </dl>
+        <div>
+            <a href="@($"/milestones/edit?id={milestone.Id}")">Edit</a> |
+            <a href="@($"/milestonesN")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Milestone? milestone;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        milestone = await context.Milestone.Include(m => m.Project).FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (milestone is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,0 +1,66 @@
+﻿@page "/milestones/create"
+@using Microsoft.EntityFrameworkCore
+@using BlazorApp1.Models
+@inject IDbContextFactory<BlazorApp1.Data.BlazorApp1Context> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Milestone</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Milestone" OnValidSubmit="AddMilestone" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="code" class="form-label">Code:</label> 
+                <InputText id="code" @bind-Value="Milestone.Code" class="form-control" /> 
+                <ValidationMessage For="() => Milestone.Code" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="Milestone.Description" class="form-control" /> 
+                <ValidationMessage For="() => Milestone.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="projectid" class="form-label">Project:</label>
+                <InputSelect id="projectid" @bind-Value="Milestone.ProjectId" class="form-control">
+                    <option value="">Select a project</option>
+                    @foreach (var project in Projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Milestone.ProjectId" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/milestonesN">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Milestone Milestone { get; set; } = new();
+    private List<Project> Projects { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Projects = await context.Project.ToListAsync();
+    }
+
+    private async Task AddMilestone()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Milestone.Add(Milestone);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/milestonesN");
+    }
+}
